@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <meta charset="utf-8">
+  <head>
+    <title>vmstats</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://people.iola.dk/olau/flot/jquery.flot.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        var socket = io.connect(location.href);
+        var vmstats = [];
+        for(var i = 0; i < 120; i++)
+          vmstats.push(null);
+        socket.on('vmstat', function(data) {
+          vmstats.push(data);
+          while(vmstats.length > 120) vmstats.shift();
+          var cpu = [
+            { label: "user", data: [] },
+            { label: "sys",  data: [] },
+            { label: "wait", data: [] },
+          ];
+
+          var memory = [
+            { label: "swaped", data: [] },
+            { label: "free",   data: [] },
+            { label: "buffer", data: [] },
+            { label: "cache",  data: [] },
+          ];
+          var dio = [
+            { label: "block in" , data: [] },
+            { label: "block out", data: [] },
+          ];
+          for(var i = 0; i < 120; i++) {
+            cpu[0].data.push([i, vmstats[i] ? vmstats[i].cpu.us : 0]);
+            cpu[1].data.push([i, vmstats[i] ? vmstats[i].cpu.sy : 0]);
+            cpu[2].data.push([i, vmstats[i] ? vmstats[i].cpu.wa : 0]);
+            memory[0].data.push([i, vmstats[i] ? vmstats[i].memory.swpd  : 0]);
+            memory[1].data.push([i, vmstats[i] ? vmstats[i].memory.free  : 0]);
+            memory[2].data.push([i, vmstats[i] ? vmstats[i].memory.buff  : 0]);
+            memory[3].data.push([i, vmstats[i] ? vmstats[i].memory.cache : 0]);
+            dio[0].data.push([i, vmstats[i] ? vmstats[i].io.bi : 0]);
+            dio[1].data.push([i, vmstats[i] ? vmstats[i].io.bo : 0]);
+          }
+          $.plot($("#cpu"), cpu, { legend: { position: 'sw' }, xaxis:  { show: false }});
+          $.plot($("#memory"), memory, { legend: { position: 'sw' }, xaxis:  { show: false }});
+          $.plot($("#dio"), dio, { legend: { position: 'sw' }, xaxis:  { show: false }});
+        });
+      });
+//procs -----------memory---------- ---swap-- -----io---- -system-- ----cpu----
+// r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa
+// 0  0      0 868664  13692  93784    0    0     1     1  103    8 19  0 81  0
+    </script>
+  </head>
+  <body>
+    <h3>CPU</h3>
+    <div id="cpu" style="width:400px;height:200px;"></div>
+    <h3>memory</h3>
+    <div id="memory" style="width:400px;height:200px;"></div>
+    <h3>disk io</h3>
+    <div id="dio" style="width:400px;height:200px;"></div>
+  </body>
+</html>
