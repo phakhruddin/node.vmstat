@@ -4,7 +4,7 @@ var fs   = require('fs');
 var util = require('util');
 var spawn  = require('child_process').spawn;
 var vmstat = spawn('vmstat', ['1', '-n']);
-var port = 8080;
+var port = 8001;
 var vmstat_last;
 
 
